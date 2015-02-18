@@ -1,31 +1,23 @@
-/*
-    Copyright 2012 Roland Bouman.
-    contact: Roland.Bouman@gmail.com ~ http://rpbouman.blogspot.com/ ~ http://code.google.com/p/xmla4js
-    twitter: @rolandbouman
-
-    This is REST-for-analysis - a sample xmla4js application for node.js
-    This script turns node.js into a REST-ful proxy for an existing XML/A server.
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Lesser General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+/************************************************************************
+    Copyright 2015 Jeff Gunderson
+		See included license
+	Copyright 2012 Roland Bouman.
+		Under the terms of the GNU Lesser General Public License
+*************************************************************************/
 var port = 8124,
     sport = 8125,
     http = require("http"),
     url = require("url"),
     xmla = require('xmla4js'),
 	sstatic = require('node-static'),
-	sserver = new(sstatic.Server)(),
+	express = require("express"),
+	morgan = require("morgan"),
+	bodyParser = require("body-parser"),
+	jwt = require("jsonwebtoken"),
+	mongoose = require("mongoose"),
+	User = require('./models/User'),
+	expressServer = express(),
+	//sserver = new(sstatic.Server)(),
     X = xmla.Xmla
     discoverRequestTypes = [
         null,
@@ -40,6 +32,14 @@ var port = 8124,
     ]
 ;
 
+/*******************************************
+ * Connect to Mongo                        *
+ ******************************************/
+mongoose.connect('mongodb://127.0.0.1:27017/test');
+
+/*******************************************
+ * Functions for XMLA Server               *
+ ******************************************/
 function rowsetToCsv(xmlaRowset) {
     var i, n = xmlaRowset.fieldCount(), text = "",
         linesep = "\r\n", fieldsep = ",", value, row
@@ -256,6 +256,10 @@ function getOutputHandler(request, requestUrl, response){
     return outputHandler;
 }
 
+/*******************************************
+ * XMLA Server                             *
+ ******************************************/
+
 http.createServer(function (request, response) {
     //Check http method
     var httpMethod = request.method;
@@ -384,8 +388,124 @@ http.createServer(function (request, response) {
     console.log(x.soapMessage);
 }).listen(port);
 
-http.createServer(function (req, res) {
-  sserver.serve(req, res);
-}).listen(sport);
+console.log("XMLA Server running on port " + port);
 
-console.log('Server running at http://127.0.0.1:8124/');
+/*******************************************
+ * Functions for Express Server            *
+ ******************************************/
+
+// Provides req.body parsing 
+expressServer.use(bodyParser.urlencoded({ extended: true }));
+expressServer.use(bodyParser.json());
+
+// Enable Cross Origin Access Control
+expressServer.use(function(req, res, next) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type, Authorization');
+    next();
+});
+
+function ensureAuthorized(req, res, next) {
+    var bearerToken;
+    var bearerHeader = req.headers["authorization"];
+    if (typeof bearerHeader !== 'undefined') {
+        var bearer = bearerHeader.split(" ");
+        bearerToken = bearer[1];
+        req.token = bearerToken;
+        next();
+    } else {
+        res.send(403);
+    }
+}
+
+expressServer.post('/authenticate', function(req, res) {
+    User.findOne({email: req.body.email, password: req.body.password}, function(err, user) {
+        if (err) {
+            res.json({
+                type: false,
+                data: "Error occured: " + err
+            });
+        } else {
+            if (user) {
+               res.json({
+                    type: true,
+                    data: user,
+                    token: user.token
+                }); 
+            } else {
+                res.json({
+                    type: false,
+                    data: "Incorrect email/password"
+                });    
+            }
+        }
+    });
+});
+
+expressServer.post('/signin', function(req, res) {
+    User.findOne({email: req.body.email, password: req.body.password}, function(err, user) {
+        if (err) {
+            res.json({
+                type: false,
+                data: "Error occured: " + err
+            });
+        } else {
+            if (user) {
+                res.json({
+                    type: false,
+                    data: "User already exists!"
+                });
+            } else {
+                var userModel = new User();
+                userModel.email = req.body.email;
+                userModel.password = req.body.password;
+                userModel.save(function(err, user) {
+                    user.token = jwt.sign(user, 'mysecret');
+                    user.save(function(err, user1) {
+                        res.json({
+                            type: true,
+                            data: user1,
+                            token: user1.token
+                        });
+                    });
+                })
+            }
+        }
+    });
+});
+
+// The me route must be authorized with a token
+expressServer.get('/me', ensureAuthorized, function(req, res) {
+    User.findOne({token: req.token}, function(err, user) {
+        if (err) {
+            res.json({
+                type: false,
+                data: "Error occured: " + err
+            });
+        } else {
+            res.json({
+                type: true,
+                data: user
+            });
+        }
+    });
+});
+
+// The dashtabs must be authorized with a token to show a dashboard
+expressServer.get("/adash/partials/dashtabs.html", ensureAuthorized, function(req, res) {
+	console.log("sending adash/partials/dashtabs.html");
+	res.sendFile(__dirname + "/adash/partials/dashtabs.html");
+});
+
+// Serve all other static content without authorization (routes are checked first)
+expressServer.use(express.static(__dirname + '/'));
+
+/*******************************************
+ * Express Server                          *
+ ******************************************/
+expressServer.listen(sport, function () {
+    console.log( "Express server listening on port " + sport);
+});
+
+

@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('erpbi-token', [])
-    .factory('Token', ['$http', '$localStorage', function($http, $localStorage){
-        var baseUrl = "http://ubuntu64:3001";
+    .factory('Token', ['$http', '$localStorage', '$location', function($http, $localStorage, $location){
+		var baseUrl = $location.absUrl().replace("/#/", "");
         function changeUser(user) {
             angular.extend(currentUser, user);
         }
