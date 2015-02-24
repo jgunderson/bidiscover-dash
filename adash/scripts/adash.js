@@ -90,23 +90,60 @@ app.controller("TabsParentController", function ($scope, $rootScope, localStorag
     };
  
     var addNewWorkspace = function() {
-      var id = $scope.workspaces.length + 1,
-	    name = 'sample-01' + id,
+	  var name = "New Dashboard",
 	    model = Model.factory(name, $rootScope.myDetails.data.email);
 
 	  $scope.workspaces.push({
-		id: id,
 		name: name,
 		model: model,
 		collapsible: false,
 		active: true
-	  });  
+	  });
 		
-	  $scope.$on('adfDashboardChanged', function (event, name, user, model) {
-        Model.store(name, user, model);
+	  $scope.$on('adfDashboardChanged', function (event, name, model) {
+	  
+	    //
+		// Store the model updated.  We get the object id back which we must
+		// set in a new workspace.  It must in the model so the id can be used
+		// by saveModel in the server.
+		//
+		var atStoreComplete = function(id) {
+			var foundIt = false,
+			  index;
+			for (index = 0; index < $scope.workspaces.length; index++) {
+			  if ($scope.workspaces[index].model.id === id) {
+				foundIt = true;
+			  }
+			}
+			if (foundIt === false) {
+			  for (index = 0; index < $scope.workspaces.length; index++) {
+				if ($scope.workspaces[index].model.id === "") {
+				  $scope.workspaces[index].model.id = id;
+				}
+			  }
+			}
+		}		
+        Model.store(model, atStoreComplete);	
       });		
     };
- 
+		
+	var atFindComplete = function(models) {
+	
+		//
+		// When findModels completes we create workspaces.
+		//
+	    var index;
+	    for (index = 0; index < models.length; ++index) {
+			$scope.workspaces.push({
+				name: models[index].model.name,
+				model: models[index].model,
+				collapsible: false,
+				active: true
+			});			
+        }
+
+	};
+  
     $scope.workspaces =
     [
     ];
@@ -114,7 +151,10 @@ app.controller("TabsParentController", function ($scope, $rootScope, localStorag
     $scope.addWorkspace = function () {
         setAllInactive();
         addNewWorkspace();
-    };       
+    };
+
+	// Populate workspaces with save models.
+	Model.findModels($rootScope.myDetails.data.email, atFindComplete);
  
 });
 

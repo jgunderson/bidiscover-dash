@@ -16,6 +16,7 @@ var port = 8124,
 	jwt = require("jsonwebtoken"),
 	mongoose = require("mongoose"),
 	User = require('./models/User'),
+	Model = require('./models/Model'),
 	expressServer = express(),
 	//sserver = new(sstatic.Server)(),
     X = xmla.Xmla
@@ -36,6 +37,7 @@ var port = 8124,
  * Connect to Mongo                        *
  ******************************************/
 mongoose.connect('mongodb://127.0.0.1:27017/test');
+mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
 
 /*******************************************
  * Functions for XMLA Server               *
@@ -490,6 +492,82 @@ expressServer.get('/me', ensureAuthorized, function(req, res) {
             });
         }
     });
+});
+
+expressServer.post('/saveModel', ensureAuthorized, function(req, res) {
+
+	if (req.body.id === "") {
+		var dashModel = new Model();
+		dashModel.user = req.body.model.user;
+		dashModel.model = req.body.model;
+		dashModel.save(function(err, dashmodel) {
+			if (err) {
+				console.log("save err: " +err);
+				res.json({type: false, data: "Error occured: " + err});
+			}
+			else {
+			    //
+				// After we save a new model we must update its saved id
+				//
+				console.log("save success " + dashmodel);
+				dashmodel.model.id = dashmodel._id
+				Model.update({'_id': dashmodel._id}, {$set: {model: dashmodel.model}}, function(err, numberUpd){
+					if (err) {
+						console.log("upd err: " +err);
+						res.json({type: false, data: "Error occured: " + err});
+					}
+					else {
+						console.log("updated this many " + numberUpd);
+						res.json({id: dashmodel._id});
+					}
+				});
+			}
+		});
+	}
+	else {
+		Model.findById(req.body.id, function (err, dashmodel) {
+		    console.log("find id: " + req.body.id);
+			if (err) {
+				console.log("first err: " +err);
+				res.json({type: false, data: "Error occured: " + err});
+			}
+			if ( dashmodel) {
+				Model.update({'_id': dashmodel._id}, {$set: {model: req.body.model}}, function(err, numberUpd){
+					if (err) {
+						console.log("upd err: " +err);
+						res.json({type: false, data: "Error occured: " + err});
+					}
+					else {
+						console.log("update success " + numberUpd);
+						res.json({id: dashmodel._id});
+					}
+				});
+			}
+			else {
+				console.log("cant find: " + req.body.id);
+				res.json({type: false, data: "cant find: " + req.body.id});
+			}			
+		});
+	}
+});
+
+expressServer.post('/findModels', ensureAuthorized, function(req, res) {
+
+		Model.find({user: req.body.user}, function (err, dashmodels) {
+			if (err) {
+				console.log("find err: " + err);
+				res.json({type: false, data: "Error occured: " + err});
+			}
+			if ( dashmodels) {
+				console.log("find success " + dashmodels);
+				res.json(dashmodels);
+			}
+			else {
+				console.log("cant find models for: " + req.body.user);
+				res.json({type: false, data: "cant find models for: " + req.body.user});
+			}			
+		});
+
 });
 
 // The dashtabs must be authorized with a token to show a dashboard

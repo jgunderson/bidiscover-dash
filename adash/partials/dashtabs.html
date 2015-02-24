@@ -1,7 +1,7 @@
 	<div ng-controller="TabsParentController">
 		<tabset>
 			<tab ng-repeat="workspace in workspaces"
-				 heading="{{workspace.name}}"
+				 heading="{{workspace.model.title}}"
 				 active=workspace.active>
 				<div ng-controller="TabsChildController">
 					<div class="container">

@@ -8,13 +8,18 @@
 
 angular.module('erpbi-model', ['adf', 'LocalStorageModule'])
 
-  .service('Model', function(localStorageService) {
+  .service('Model', function(localStorageService, $rootScope, $http, $location) {
     this.factory = function(name, user) {
-	  var model = localStorageService.get(name);
+	  //var model = localStorageService.get(name);
+	  var model = null;
+	  
 	  if (!model) {
 		// set default model for demo purposes
 		model = {
-		  title: "Sample 01",
+		  user: user,
+		  name: name,
+		  id: "",
+		  title: "New Dashboard",
 		  structure: "4-8",
 		  rows: [{
 			columns: [{
@@ -73,10 +78,31 @@ angular.module('erpbi-model', ['adf', 'LocalStorageModule'])
 		  }]      
 		};
 	  }
+	  
 	  return model;
 	}
 		
-    this.store = function(name, user, model) {
-      localStorageService.set(name, model);
-    }
+    this.store = function(model, atStoreComplete) {
+		var baseUrl = $location.absUrl().replace("/#/", "");
+		$http.post(baseUrl + '/saveModel', {id: model.id, model: model}).
+			success(function(data, status, headers, config) {
+				atStoreComplete(data.id);
+			}).
+			error(function(data, status, headers, config) {
+				$rootScope.error = 'Model save error: ' + status;
+			});  
+		}
+		
+    this.findModels = function(user, atFindComplete) {
+		var baseUrl = $location.absUrl().replace("/#/", "");
+		$http.post(baseUrl + '/findModels', {user: user}).
+			success(function(data, status, headers, config) {
+			  if(atFindComplete) {
+				atFindComplete(data);
+			  }
+			}).
+			error(function(data, status, headers, config) {
+				$rootScope.error = 'Models find error: ' + status;
+			});  
+		}
   });
