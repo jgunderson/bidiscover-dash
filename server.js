@@ -4,8 +4,7 @@
 	Copyright 2012 Roland Bouman.
 		Under the terms of the GNU Lesser General Public License
 *************************************************************************/
-var port = 8124,
-    sport = 8125,
+var config = require("./config"),
     http = require("http"),
     url = require("url"),
     xmla = require('xmla4js'),
@@ -18,8 +17,7 @@ var port = 8124,
 	User = require('./models/User'),
 	Model = require('./models/Model'),
 	expressServer = express(),
-	//sserver = new(sstatic.Server)(),
-    X = xmla.Xmla
+    X = xmla.Xmla,
     discoverRequestTypes = [
         null,
         {name: X.DISCOVER_DATASOURCES, key: "DataSourceName", property: X.PROP_DATASOURCEINFO},
@@ -36,13 +34,14 @@ var port = 8124,
 /*******************************************
  * Connect to Mongo                        *
  ******************************************/
-mongoose.connect('mongodb://127.0.0.1:27017/test');
+mongoose.connect(config.config.mongoUrl);
 mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
 
 /*******************************************
  * Functions for XMLA Server               *
  ******************************************/
-function rowsetToCsv(xmlaRowset) {
+
+ function rowsetToCsv(xmlaRowset) {
     var i, n = xmlaRowset.fieldCount(), text = "",
         linesep = "\r\n", fieldsep = ",", value, row
     ;
@@ -263,6 +262,7 @@ function getOutputHandler(request, requestUrl, response){
  ******************************************/
 
 http.createServer(function (request, response) {
+
     //Check http method
     var httpMethod = request.method;
     if (!({
@@ -281,14 +281,8 @@ http.createServer(function (request, response) {
         outputHandler
     ;
 	
-	console.log("\n query is:");
-    console.log(query);
-	console.log("\nnode Request url:");
-    console.log(requestUrl);	
-	
     if (typeof(xmlaUrl) === "undefined") {
-        httpError(response, 400, "Missing parameter \"url\"");
-        return;
+		xmlaUrl = config.config.biUrl;
     }
 
     outputHandler = getOutputHandler(request, requestUrl, response);
@@ -297,100 +291,41 @@ http.createServer(function (request, response) {
         httpError(response, 406);
         return;
     }
+	
+	console.log("hear");
 
-    console.log("\nnode Request url:");
-    console.log(requestUrl);
+ 	var xmlaConnect = new xmla.Xmla({
+		async: true,
+		properties: {
+			DataSourceInfo: "Provider=Mondrian;DataSource=Pentaho",
+			Catalog: "xTuple",
+		  },
+		  listeners: {
+			events: xmla.Xmla.EVENT_ERROR,
+			handler: function (eventName, eventData, xmla) {
+				console.log(
+					"xmla error occurred: " + eventData.exception.message + " (" + eventData.exception.code + ")" 
+					);
+			  }
+		  }
+	  });
+  
+	xmlaConnect.executeTabular({
+        statement: query.mdx,
+        url : config.config.biUrl,
+        success: function (xmla, options, xmlaResponse) {
+			var obj = xmlaResponse.fetchAllAsObject();
+			obj = {data :  obj};
+			console.log("\nolapdata query result: " + JSON.stringify(obj));
+			response.writeHead(200, { 'Content-Type': 'application/json' });
+			response.write(JSON.stringify(obj));
+			response.end();
+          },
+      });
 
-    //Everything looking good so far
-    response.writeHead(200);
+}).listen(config.config.port);
 
-    //Map the path of the original request url to a xmla request
-    var fragments = requestUrl.pathname.split("/"),
-        decodedFragments = decodeFragments(fragments),
-        numFragments = fragments.length
-		
-		 console.log("\n fragments:");
-         console.log(numFragments);
-		
-        properties = {},
-        restrictions = {},
-        discoverRequestType = discoverRequestTypes[numFragments],
-        xmlaRequest = {
-            async: true,
-            url: xmlaUrl,
-            success: function(xmla, xmlaRequest, xmlaResponse) {
-                //It worked, call the content handler to write the data to the response
-                console.log("\nResponse:");
-                console.log(xmla.responseText);
-                var output = outputHandler.call(null, xmla, xmlaRequest, xmlaResponse, requestUrl);
-                response.write(output);
-            },
-            error: function(xmla, xmlaRequest, exception) {
-                //It failed, lets write the error to the response.
-                console.log("error");
-                console.log(exception.message);
-                console.log(xmla.responseText);
-                response.write("error!!");
-            },
-            callback: function(){
-                //callback gets always called after either success or error,
-                //use it to conclude the response.
-                response.end();
-            }
-        }
-    ;
-    requestUrl.fragments = fragments;
-    requestUrl.decodedFragments = decodedFragments;
-    switch (numFragments) {
-        case 8:
-            restrictions[discoverRequestTypes[7].key] = decodedFragments[7];
-        case 7:
-            restrictions[discoverRequestTypes[6].key] = decodedFragments[6];
-        case 6:
-            restrictions[discoverRequestTypes[5].key] = decodedFragments[5];
-        case 5:
-            restrictions[discoverRequestTypes[4].key] = decodedFragments[4];
-        case 4:
-            if (numFragments === 4) {
-                //check if we need to output cube metadata or a mdx query result
-                if (typeof(query.mdx) !== "undefined") {
-                    xmlaRequest.method = X.METHOD_EXECUTE;
-                    xmlaRequest.statement = query.mdx;
-                    properties[X.PROP_FORMAT] = query.resultformat || (contentType === "text/csv" ? Xmla.PROP_FORMAT_TABULAR : X.PROP_FORMAT_MULTIDIMENSIONAL)
-                }
-            }
-            restrictions[discoverRequestTypes[3].key] = properties[discoverRequestTypes[3].property] = decodedFragments[3];
-        case 3:
-            restrictions[discoverRequestTypes[2].key] = properties[discoverRequestTypes[2].property] = decodedFragments[2];
-            xmlaRequest.restrictions = restrictions;
-        case 2:
-            //check if we need to output datasoures or catalog metadata for a particular datasource
-            if (fragments[1] !== "") {
-                properties[discoverRequestTypes[1].property] = decodedFragments[1];
-                xmlaRequest.properties = properties;
-            }
-            if (!xmlaRequest.method) {
-                xmlaRequest.method = X.METHOD_DISCOVER;
-                if (fragments[1] === "") {
-                    xmlaRequest.requestType = X.DISCOVER_DATASOURCES;
-                }
-                else {
-                    xmlaRequest.requestType = discoverRequestType.name;
-                    xmlaRequest.restrictions = restrictions;
-                }
-            }
-    }
-
-    //do the xmla request, log the messages
-    var x = new xmla.Xmla();
-    console.log("\nxmla4js Request:");
-    console.log(xmlaRequest);
-    x.request(xmlaRequest);
-    console.log("\nSOAP message:");
-    console.log(x.soapMessage);
-}).listen(port);
-
-console.log("XMLA Server running on port " + port);
+console.log("XMLA Server running on port " + config.config.port);
 
 /*******************************************
  * Functions for Express Server            *
@@ -582,8 +517,9 @@ expressServer.use(express.static(__dirname + '/'));
 /*******************************************
  * Express Server                          *
  ******************************************/
-expressServer.listen(sport, function () {
-    console.log( "Express server listening on port " + sport);
+ 
+expressServer.listen(config.config.sport, function () {
+    console.log( "Express server listening on port " + config.config.sport);
 });
 
 

@@ -19,60 +19,17 @@ angular.module('erpbi-model', ['adf', 'LocalStorageModule'])
 		  user: user,
 		  name: name,
 		  id: "",
-		  title: "New Dashboard",
-		  structure: "4-8",
+		  title: "Getting Started",
+		  structure: "12/6-6",
 		  rows: [{
 			columns: [{
-			  styleClass: "col-md-4",
-			  widgets: [{
-				type: "linklist",
-				config: {
-				  links: [{
-					title: "SCM-Manager",
-					href: "http://www.scm-manager.org"
-				  }, {
-					title: "Github",
-					href: "https://github.com"
-				  }, {
-					title: "Bitbucket",
-					href: "https://bitbucket.org"
-				  }, {
-					title: "Stackoverflow",
-					href: "http://stackoverflow.com"
-				  }]
-				},
-				title: "Links"
-			  }, {
-				type: "weather",
-				config: {
-				  location: "Hildesheim"
-				},
-				title: "Weather Hildesheim"
-			  }, {
-				type: "weather",
-				config: {
-				  location: "Edinburgh"
-				},
-				title: "Weather"
-			  }, {
-				type: "weather",
-				config: {
-				  location: "Dublin,IE"
-				},
-				title: "Weather"
-			  }]
-			}, {
-			  styleClass: "col-md-8",
-			  widgets: [{
-				type: "randommsg",
-				config: {},
-				title: "Douglas Adams"
-			  }, {
+			  styleClass: "col-md-12",
+			  widgets: [ {
 				type: "markdown",
 				config: {
-				  content: "![scm-manager logo](https://bitbucket.org/sdorra/scm-manager/wiki/resources/scm-manager_logo.jpg)\n\nThe easiest way to share and manage your Git, Mercurial and Subversion repositories over http.\n\n* Very easy installation\n* No need to hack configuration files, SCM-Manager is completely configureable from its Web-Interface\n* No Apache and no database installation is required\n* Central user, group and permission management\n* Out of the box support for Git, Mercurial and Subversion\n* Full RESTFul Web Service API (JSON and XML)\n* Rich User Interface\n* Simple Plugin API\n* Useful plugins available ( f.e. Ldap-, ActiveDirectory-, PAM-Authentication)\n* Licensed under the BSD-License"
+				  content: "![logo](/src/styles/logo.png)\n\nTo design a dashboard you can edit this Getting Started Dashboard or select the + tab to create a new dasboard.  Then select the edit icon.  This gives you a choice to:\n\n* Add a Widget\n* Edit the Dashboard\n* Save Changes\n* Undo Changes\n\nAfter selecting a Widget you have options to:\n\n* Change the Widget Location\n* Edit Widget Configuration\n* Remove Widget\nOnce you are happy with the dashboard, don't forget to save it!"
 				},
-				title: "Markdown"
+				title: ""
 			  }]
 			}]
 		  }]      

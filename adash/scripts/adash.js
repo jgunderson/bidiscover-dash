@@ -11,7 +11,7 @@ var app = angular.module('erpbi-adash', [
   'sample.widgets.news', 'sample.widgets.randommsg',
   'sample.widgets.weather', 'sample.widgets.markdown',
   'sample.widgets.linklist', 'sample.widgets.github',
-  'sample.widgets.version', 'LocalStorageModule',
+  'sample.widgets.version', 'sample.widgets.timeseries', 'LocalStorageModule',
   'structures', 'sample-01', 'sample-02', 'sample-03',
   'ngRoute', 'ngStorage' /* added for signin/out */
 ]);
@@ -90,7 +90,7 @@ app.controller("TabsParentController", function ($scope, $rootScope, localStorag
     };
  
     var addNewWorkspace = function() {
-	  var name = "New Dashboard",
+	  var name = "Welcome",
 	    model = Model.factory(name, $rootScope.myDetails.data.email);
 
 	  $scope.workspaces.push({

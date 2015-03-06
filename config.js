@@ -7,14 +7,13 @@ Backbone:true, _:true, X:true, __dirname:true, exports:true */
 (function () {
   "use strict"
 
-	var mongoose = require('mongoose'),
-	  Schema = mongoose.Schema,
-	  UserSchema = new Schema({
-		email: String,
-		password: String,
-		token: String
-	  });
+	var config = {
+	  port: 8124,
+	  sport: 8125,
+	  mongoUrl: 'mongodb://127.0.0.1:27017/test',
+	  biUrl: 'http://ubuntu64:8080/pentaho/Xmla?userid=admin-default.dev&password=admin'
+	};
 
-	module.exports = mongoose.model('User', UserSchema);
+	exports.config = config;
 
 }());
