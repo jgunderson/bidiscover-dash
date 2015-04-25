@@ -38,7 +38,7 @@ mongoose.connect(config.config.mongoUrl);
 mongoose.connection.on('error', console.error.bind(console, 'connection error:'));
 
 /*******************************************
- * Functions for XMLA Server               *
+ * Functions for /xmla                     *
  ******************************************/
 
  function rowsetToCsv(xmlaRowset) {
@@ -258,77 +258,7 @@ function getOutputHandler(request, requestUrl, response){
 }
 
 /*******************************************
- * XMLA Server                             *
- ******************************************/
-
-http.createServer(function (request, response) {
-
-    //Check http method
-    var httpMethod = request.method;
-    if (!({
-        "GET": true,
-        "HEAD": true
-    })[httpMethod]) {
-        httpError(response, 405, "Method must be GET or HEAD");
-        return;
-    }
-
-    //Analyze request
-    var requestUrl = url.parse(request.url, true),
-        query = requestUrl.query,
-        xmlaUrl = query.url,
-		contentType = query.format,
-        outputHandler
-    ;
-	
-    if (typeof(xmlaUrl) === "undefined") {
-		xmlaUrl = config.config.biUrl;
-    }
-
-    outputHandler = getOutputHandler(request, requestUrl, response);
-
-    if (typeof(outputHandler)!=="function") {
-        httpError(response, 406);
-        return;
-    }
-	
-	console.log("hear");
-
- 	var xmlaConnect = new xmla.Xmla({
-		async: true,
-		properties: {
-			DataSourceInfo: "Provider=Mondrian;DataSource=Pentaho",
-			Catalog: "xTuple",
-		  },
-		  listeners: {
-			events: xmla.Xmla.EVENT_ERROR,
-			handler: function (eventName, eventData, xmla) {
-				console.log(
-					"xmla error occurred: " + eventData.exception.message + " (" + eventData.exception.code + ")" 
-					);
-			  }
-		  }
-	  });
-  
-	xmlaConnect.executeTabular({
-        statement: query.mdx,
-        url : config.config.biUrl,
-        success: function (xmla, options, xmlaResponse) {
-			var obj = xmlaResponse.fetchAllAsObject();
-			obj = {data :  obj};
-			console.log("\nolapdata query result: " + JSON.stringify(obj));
-			response.writeHead(200, { 'Content-Type': 'application/json' });
-			response.write(JSON.stringify(obj));
-			response.end();
-          },
-      });
-
-}).listen(config.config.port);
-
-console.log("XMLA Server running on port " + config.config.port);
-
-/*******************************************
- * Functions for Express Server            *
+ * Set up Express Server                   *
  ******************************************/
 
 // Provides req.body parsing 
@@ -355,6 +285,71 @@ function ensureAuthorized(req, res, next) {
         res.send(403);
     }
 }
+
+expressServer.get('/xmla', function(req, res) {
+
+    //Check http method
+    var httpMethod = req.method;
+    if (!({
+        "GET": true,
+        "HEAD": true
+    })[httpMethod]) {
+        httpError(res, 405, "Method must be GET or HEAD");
+        return;
+    }
+
+    //Analyze request
+    var requestUrl = url.parse(req.url, true),
+        query = requestUrl.query,
+        xmlaUrl = query.url,
+		contentType = query.format,
+        outputHandler
+    ;
+	
+    if (typeof(xmlaUrl) === "undefined") {
+		xmlaUrl = config.config.biUrl;
+    }
+
+    outputHandler = getOutputHandler(req, requestUrl, res);
+
+    if (typeof(outputHandler)!=="function") {
+        httpError(response, 406);
+        return;
+    }
+
+ 	var xmlaConnect = new xmla.Xmla({
+		async: true,
+		properties: {
+			DataSourceInfo: "Provider=Mondrian;DataSource=Pentaho",
+			Catalog: "xTuple",
+		  },
+		  listeners: {
+			events: xmla.Xmla.EVENT_ERROR,
+			handler: function (eventName, eventData, xmla) {
+				console.log(
+					"xmla error occurred: " + eventData.exception.message + " (" + eventData.exception.code + ")" 
+					);
+			  }
+		  }
+	  });
+
+	console.log("query: " + query.mdx);
+	console.log("to: " + config.config.biUrl);
+	  
+	xmlaConnect.executeTabular({
+        statement: query.mdx,
+        url : config.config.biUrl,
+        success: function (xmla, options, xmlaResponse) {
+			var obj = xmlaResponse.fetchAllAsObject();
+			obj = {data :  obj};
+			console.log("\nolapdata query result: " + JSON.stringify(obj));
+			res.writeHead(200, { 'Content-Type': 'application/json' });
+			res.write(JSON.stringify(obj));
+			res.end();
+          },
+      });
+
+});
 
 expressServer.post('/authenticate', function(req, res) {
     User.findOne({email: req.body.email, password: req.body.password}, function(err, user) {

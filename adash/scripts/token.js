@@ -2,7 +2,19 @@
 
 angular.module('erpbi-token', [])
     .factory('Token', ['$http', '$localStorage', '$location', function($http, $localStorage, $location){
-		var baseUrl = $location.absUrl().replace("/#/", "");
+
+		//
+		// Sometimes there is /#/ and sometimes a / at the end of the URL to strip off	
+		//
+		var theUrl = $location.absUrl().replace("/#/", ""),
+		  baseUrl;
+		if (theUrl.substring(theUrl.length - 1, theUrl.length) == "/") {
+		  baseUrl = theUrl.substring(0, theUrl.length - 1)
+		  }
+		else {
+		  baseUrl = theUrl;
+		}
+
         function changeUser(user) {
             angular.extend(currentUser, user);
         }
@@ -41,6 +53,7 @@ angular.module('erpbi-token', [])
                 $http.post(baseUrl + '/signin', data).success(success).error(error)
             },
             signin: function(data, success, error) {
+			    console.log("used is: " + baseUrl);
                 $http.post(baseUrl + '/authenticate', data).success(success).error(error)
             },
             me: function(success, error) {

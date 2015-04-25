@@ -8,14 +8,14 @@ angular.module('erpbi-schema', [])
      */
     this.getMeasures = function (schema, cube) {
       var measures = [],
-	    schema = {},
+	    schemaObj = {},
         cubeSchema = {};
       _.each(this.schemas, function (item) {
         if (item.name === schema) {
-          schema = item;
+          schemaObj = item;
         }
       });
-      _.each(schema.cubes, function (item) {
+      _.each(schemaObj.cubes, function (item) {
         if (item.name === cube) {
           cubeSchema = item;
         }
@@ -29,15 +29,15 @@ angular.module('erpbi-schema', [])
      *  Get measure name for measure title in a cube.
      */
     this.getMeasureName = function (schema, cube, title) {
-      var measure = "";
-	    schema = {},
+      var measure = "",
+	    schemaObj = {},
         cubeSchema = {};
       _.each(this.schemas, function (item) {
         if (item.name === schema) {
-          schema = item;
+          schemaObj = item;
         }
       });
-      _.each(schema.cubes, function (item) {
+      _.each(schemaObj.cubes, function (item) {
         if (item.name === cube) {
           cubeSchema = item;
         }
@@ -50,18 +50,42 @@ angular.module('erpbi-schema', [])
       return measure;
     },
     /*
+     *  Get measure title for measure name in a cube.
+     */
+    this.getMeasureTitle = function (schema, cube, name) {
+      var measure = "",
+	    schemaObj = {},
+        cubeSchema = {};
+      _.each(this.schemas, function (item) {
+        if (item.name === schema) {
+          schemaObj = item;
+        }
+      });
+      _.each(schemaObj.cubes, function (item) {
+        if (item.name === cube) {
+          cubeSchema = item;
+        }
+      });
+      _.each(cubeSchema.measures, function (item) {
+        if (item.name === name) {
+          measure = item.title;
+        }
+      });
+      return measure;
+    },
+    /*
      * Get dimensions for this cube.
      */
     this.getDimensions = function (schema, cube) {
       var dimensions = [],
-	    schema = {},
+	    schemaObj = {},
         cubeSchema = {};
       _.each(this.schemas, function (item) {
         if (item.name === schema) {
-          schema = item;
+          schemaObj = item;
         }
       });
-      _.each(schema.cubes, function (item) {
+      _.each(schemaObj.cubes, function (item) {
         if (item.name === cube) {
           cubeSchema = item;
         }
@@ -76,14 +100,14 @@ angular.module('erpbi-schema', [])
      */
     this.getDimensionNameProp = function (schema, cube, title) {
       var dimension = "";		
-	    schema = {},
+	    schemaObj = {},
         cubeSchema = {};
       _.each(this.schemas, function (item) {
         if (item.name === schema) {
-          schema = item;
+          schemaObj = item;
         }
       });
-      _.each(schema.cubes, function (item) {
+      _.each(schemaObj.cubes, function (item) {
         if (item.name === cube) {
           cubeSchema = item;
         }
@@ -101,13 +125,13 @@ angular.module('erpbi-schema', [])
     this.getDimensionHier = function (schema, cube, title) {
       var cubeSchema = {},
         dimHier = "",		
-	    schema = {};
+	    schemaObj = {};
       _.each(this.schemas, function (item) {
         if (item.name === schema) {
-          schema = item;
+          schemaObj = item;
         }
       });
-      _.each(schema.cubes, function (item) {
+      _.each(schemaObj.cubes, function (item) {
         if (item.name === cube) {
           cubeSchema = item;
         }
@@ -124,18 +148,18 @@ angular.module('erpbi-schema', [])
      */
     this.getDimensionTime = function (schema, cube) {
       var cubeSchema = {},	  
-	    schema = {};
+	    schemaObj = {};
       _.each(this.schemas, function (item) {
         if (item.name === schema) {
-          schema = item;
+          schemaObj = item;
         }
       });
-      _.each(schema.cubes, function (item) {
+      _.each(schemaObj.cubes, function (item) {
         if (item.name === cube) {
           cubeSchema = item;
         }
       });
-      return cubeSchema.timeDimension.name;
+      return cubeSchema.timeDimension;
     }
 
   this.schemas = [
@@ -154,7 +178,7 @@ angular.module('erpbi-schema', [])
           dimensions: [{title: "account", name: "CRM Account", nameProperty: "CRM Account Name", codeHier: "[CRM Account.CRM Accounts by Code].[CRM Account Code]"},
                      {title: "user", name: "User", nameProperty: "User Name", codeHier: "[User.Users by Code].[User Code]"},
                      {title: "opportunity", name: "Opportunity", nameProperty: "Opportunity Name", codeHier: "[Opportunity].[Opportunity]"}],
-          timeDimension: {name: "Issue Date.Calendar"}
+          timeDimension: {name: "Issue Date.Calendar", year: "[Issue Date.Calendar Months].[Year]", month: "[Issue Date.Calendar Months].[Month]"}
         },
         {name: "CRQuote", //Quote
           measures: [{title: "amountQuote", name: "Amount, Quote Gross"},
@@ -170,13 +194,13 @@ angular.module('erpbi-schema', [])
                      {title: "itemType", name: "Product.Products by Type by Code", nameProperty: "Type Name", codeHier: "[Product.Products by Type by Code].[Type]"},
                      {title: "shipRegion", name: "Ship City", nameProperty: "Region Name", codeHier: "[Ship City.Ship Region].[Region Code]"},
                      {title: "billRegion", name: "Bill City", nameProperty: "Region Name", codeHier: "[Bill City.Bill Region].[Region Code]"}],
-          timeDimension: {name: "Issue Date.Calendar"}
+          timeDimension: {name: "Issue Date.Calendar", year: "[Issue Date.Calendar Months].[Year]", month: "[Issue Date.Calendar Months].[Month]"}
         },
         {name: "CROpportunityAndOrder",
           measures: [{title: "ratioConversion", name: "Ratio, Conversion"},
                      {title: "ratioConversionWeighted", name: "Ratio, Conversion Weighted"}],
           dimensions: [],
-          timeDimension: {name: "Issue Date.Calendar"}
+          timeDimension: {name: "Issue Date.Calendar", year: "[Issue Date.Calendar Months].[Year]", month: "[Issue Date.Calendar Months].[Month]"}
         },
         {name: "CROpportunityForecast",  //OpportunityForecast
           measures: [{title: "amountOpportunityForecast", name: "Amount, Opportunity Forecast"},
@@ -184,7 +208,7 @@ angular.module('erpbi-schema', [])
                      {title: "percentOpportunityForecastProbability", name: "Percent, Forecast Probability"},
                      {title: "countForecastOpportunities", name: "Count, Opportunities"}],
           dimensions: [],
-          timeDimension: {name: "Period.Fiscal Period CL"}
+          timeDimension: {name: "Period.Fiscal Period CL", year: "[Fiscal Period.Fiscal Period CL].[Fiscal Year]", month: "[Fiscal Period.Fiscal Period CL].[Fiscal Period]"}
         },
       ],
     },
@@ -264,8 +288,8 @@ angular.module('erpbi-schema', [])
                      {title: "itemType", name: "Product.Products by Type by Code", nameProperty: "Type Name", codeHier: "[Product.Products by Type by Code].[Type]"},
                      {title: "shipRegion", name: "Ship City", nameProperty: "Region Name", codeHier: "[Ship City.Ship Region].[Region Code]"},
                      {title: "billRegion", name: "Bill City", nameProperty: "Region Name", codeHier: "[Bill City.Bill Region].[Region Code]"}],
-          timeDimension: {name: "Issue Date.Calendar"}
-        }
+          timeDimension: {name: "Issue Date.Calendar", year: "[Issue Date.Calendar Months].[Year]", month: "[Issue Date.Calendar Months].[Month]"}
+        },
       ]
 	},
 	
@@ -285,7 +309,7 @@ angular.module('erpbi-schema', [])
                      {title: "itemType", name: "Product.Products by Type by Code", nameProperty: "Type Name", codeHier: "[Product.Products by Type by Code].[Type]"},
                      {title: "shipRegion", name: "Ship City", nameProperty: "Region Name", codeHier: "[Ship City.Ship Region].[Region Code]"},
                      {title: "billRegion", name: "Bill City", nameProperty: "Region Name", codeHier: "[Bill City.Bill Region].[Region Code]"}],
-          timeDimension: {name: "Fiscal Period.Fiscal Period CL"},
+          timeDimension: {name: "Period.Fiscal Period CL", year: "[Fiscal Period.Fiscal Period CL].[Fiscal Year]", month: "[Fiscal Period.Fiscal Period CL].[Fiscal Period]"},
         },
         
         {name: "SODelivery", //Shipment
@@ -305,7 +329,7 @@ angular.module('erpbi-schema', [])
                      {title: "itemType", name: "Product.Products by Type by Code", nameProperty: "Type Name", codeHier: "[Product.Products by Type by Code].[Type]"},
                      {title: "shipRegion", name: "Ship City", nameProperty: "Region Name", codeHier: "[Ship City.Ship Region].[Region Code]"},
                      {title: "billRegion", name: "Bill City", nameProperty: "Region Name", codeHier: "[Bill City.Bill Region].[Region Code]"}],
-          timeDimension: {name: "Delivery Date.Calendar"}
+          timeDimension: {name: "Delivery Date.Calendar", year: "[Delivery Date.Calendar Months].[Year]", month: "[Delivery Date.Calendar Months].[Month]"}
         },
       ]
 	}

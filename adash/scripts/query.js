@@ -11,7 +11,7 @@ angular.module('erpbi-query', [])
 					   value: "IIf(IsEmpty([Measures].[$measure]), 0.000, [Measures].[$measure])"
 					},
 					{name: "Measures.[prevKPI]",
-					   value: "([Measures].[$measure] , ParallelPeriod([Issue Date.Calendar Months].[$year]))"
+					   value: "([Measures].[$measure] , ParallelPeriod([$dimensionTime].[$year]))"
 					},
 					{name: "[Measures].[prevYearKPI]",
 					   value: "iif (Measures.[prevKPI] = 0 or Measures.[prevKPI] = NULL or IsEmpty(Measures.[prevKPI]), 0.000, Measures.[prevKPI])"
@@ -22,9 +22,9 @@ angular.module('erpbi-query', [])
 					"[Measures].[prevYearKPI]"
 				  ],
 				  rows: [
-					"LastPeriods(12, [Issue Date.Calendar Months].[$year].[$month])"
+					"LastPeriods(12, [$dimensionTime].[$year].[$month])"
 				  ],
-				  cube: "",
+				  cube: "$cube",
 				  where: []
 			    }
 			  ]
@@ -57,7 +57,7 @@ angular.module('erpbi-query', [])
 				  rows: [
 					"{filter(TopCount($dimensionHier.Hierarchy.Children, 50, [Measures].[THESUM]),[Measures].[THESUM]>0)}"
 				  ],
-				  cube: "",
+				  cube: "$cube",
 				  where: []
 			    }
 			  ]
@@ -77,7 +77,7 @@ angular.module('erpbi-query', [])
 				  rows: [
 					"Hierarchize({[Opportunity].[All Opportunities]})"
 				  ],
-				  cube: "",
+				  cube: "$cube",
 				  where: []
 			    }
 			  ]
@@ -268,15 +268,30 @@ angular.module('erpbi-query', [])
 
         ];
 		
-		this.getQuery = function(query) {
-			  _.each(this.queries, function (item) {
-				if (item.name === query) {
-				  return item;
-				}
-			  });
+		this.getTemplates = function(templates) {
+		  var theItem;
+		  _.each(this.queries, function (item) {
+		    if (item.name === templates) {
+			  theItem = item.templates;
+			}
+		  });
+		  return theItem;
 		};
 		
-		this.jsonToMDX = function (queryObj, filters) {
+	    /**
+	      Update Query with parameters
+	     */
+	    this.updateQuery = function (query, cube, measure, dimensionTime, year, month) {
+	      var updatedQuery;
+          updatedQuery = query.replace("$cube", cube);
+          updatedQuery = updatedQuery.replace(/\$measure/g, measure);
+		  updatedQuery = updatedQuery.replace(/\$dimensionTime/g, dimensionTime);
+          updatedQuery = updatedQuery.replace(/\$year/g, year);
+          updatedQuery = updatedQuery.replace(/\$month/g, month);
+          return updatedQuery;
+	    },
+		
+		this.jsonToMDX = function (queryObj, cube, measure, dimensionTime, year, month, filters) {
 		  var query = "",
 		  comma = "",
 		  filterSet = filters ? filters : [];
@@ -313,7 +328,7 @@ angular.module('erpbi-query', [])
 		  if (query.indexOf(" WHERE (") !== -1) {
 			query += ")";
 		  }
-		  return query;
+		  return this.updateQuery(query, cube, measure, dimensionTime, year, month);
 		};	
     }
 );
