@@ -1,15 +1,14 @@
 'use strict';
 
-angular.module('erpbi-chart-dir', [])
-    .service('Chart-dir', function(){
+angular.module('erpbi-chart-dir', ["erpbi-schema"])
+    .service('ChartDir', function(Schema){
 		this.charts = [
 			{
 				name: "timeseries",
 				subjects: [
 					{ name: "crm", title: "Customer Relationship Management", schema: "crm"},
 					{ name: "sales", title: "Sales", schema: "sales"},
-					{ name: "delivery", title: "Delivery & Profitability", schema: "delivery"},
-					{ name: "financial", title: "Financials", schema: "financial"},
+					{ name: "fullfillment", title: "Fullfillment & Profitability", schema: "fullfillment"},
 				],
 				query: "timeseries"
 			},
@@ -18,8 +17,7 @@ angular.module('erpbi-chart-dir', [])
 				subjects: [
 					{ name: "crm", title: "Customer Relationship Management", schema: "crm"},
 					{ name: "sales", title: "Sales", schema: "sales"},
-					{ name: "delivery", title: "Delivery & Profitability", schema: "delivery"},
-					{ name: "financial", title: "Financials", schema: "financial"},
+					{ name: "fullfillment", title: "Fullfillment & Profitability", schema: "fullfillment"},
 				],
 				query: "topdims"
 			},
@@ -38,14 +36,27 @@ angular.module('erpbi-chart-dir', [])
         ];
 		
 		this.getSubjects = function(chart) {
-			  var subjects = [];
+			  var subjects = [],
 				chartDetail = {};
 			  _.each(this.charts, function (item) {
 				if (item.name === chart) {
 				  chartDetail = item;
 				}
 			  });
-			  return chartDetail.subjects;
-		};	
+			  _.each(chartDetail.subjects, function (item) {
+				subjects.push( {value: item.name, text: ("%" + item.name).toLocaleString()});
+			  });
+			  return subjects;
+		};
+
+		this.getQuery = function(chart) {
+			  var query;
+			  _.each(this.charts, function (item) {
+				if (item.name === chart) {
+				  query = item.query;
+				}
+			  });
+			  return query;
+		};		
     }
 );

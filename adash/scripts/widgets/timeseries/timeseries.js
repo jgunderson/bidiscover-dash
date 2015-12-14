@@ -24,7 +24,7 @@
 
 'use strict';
 
-angular.module('sample.widgets.timeseries', ['adf.provider', 'erpbi-mdx', 'erpbi-schema', 'erpbi-query'])
+angular.module('sample.widgets.timeseries', ['adf.provider', 'erpbi-mdx', 'erpbi-schema', 'erpbi-query', 'erpbi-chart-dir', 'ngDropdowns'])
   .value('weatherServiceUrl', 'http://api.openweathermap.org/data/2.5/weather?units=metric&callback=JSON_CALLBACK&q=')
   .config(function(dashboardProvider){
     dashboardProvider
@@ -42,12 +42,12 @@ angular.module('sample.widgets.timeseries', ['adf.provider', 'erpbi-mdx', 'erpbi
           }
         },
         edit: {
-          templateUrl: 'adash/scripts/widgets/timeseries/edit.html'
-		  // see linklist edit controller for controller example
+          templateUrl: 'adash/scripts/widgets/timeseries/edit.html',
+		  controller: 'chartEditCtrl'
         }
       });
   })
-  .service('chartService', function($q, $http, Mdx, Query){
+  .service('chartService', function($q, $http, Mdx, Query, Schema, ChartDir){
     return {
       get: function(config){
         var deferred = $q.defer();
@@ -55,9 +55,9 @@ angular.module('sample.widgets.timeseries', ['adf.provider', 'erpbi-mdx', 'erpbi
 		  deferred.resolve({ collections: collections, config: config}); //OK
 		  //deferred.reject();      //not OK
 		};
-		var templatesObj = Query.getTemplates("timeseries");
-		var query = Query.jsonToMDX(templatesObj[0], "SOByPeriod", "Days, Order to Delivery", "Fiscal Period.Fiscal Period CL", "2015", "3", []);
-		// "WITH  MEMBER [Measures].[KPI] AS IIf(IsEmpty([Measures].[Days, Order to Delivery]), 0.000, [Measures].[Days, Order to Delivery]) MEMBER Measures.[prevKPI] AS ([Measures].[Days, Order to Delivery] , ParallelPeriod([Fiscal Period.Fiscal Period CL].[2015])) MEMBER [Measures].[prevYearKPI] AS iif(Measures.[prevKPI] = 0 or Measures.[prevKPI] = NULL or IsEmpty(Measures.[prevKPI]), 0.000, Measures.[prevKPI]) SELECT NON EMPTY {[Measures].[KPI], [Measures].[prevYearKPI]} ON COLUMNS, NON EMPTY {LastPeriods(12, [Fiscal Period.Fiscal Period CL].[2015].[3])} ON ROWS FROM SOByPeriod"
+		var timeDimension = Schema.getDimensionTime("fullfillment", "SOByPeriod").name;
+		var templatesObj = Query.getTemplates(ChartDir.getQuery("timeseries"));
+		var query = Query.jsonToMDX(templatesObj[0], "SOByPeriod", "Days, Order to Delivery", timeDimension, "2015", "3", []);
 		var templates = [
 			{query: query}
 			];
@@ -187,4 +187,47 @@ angular.module('sample.widgets.timeseries', ['adf.provider', 'erpbi-mdx', 'erpbi
 	}
 
     //$scope.collections = collections;
+  })
+  .controller('chartEditCtrl', function($scope, config, Schema, ChartDir){
+  
+    $scope.config.theSubject = {text: null, value: null};
+	$scope.config.theOldSubject = null;
+  
+    $scope.config.subjects = ChartDir.getSubjects("timeseries");
+	
+	$scope.config.theCube = {text: null, value: null};
+	$scope.config.theOldCube = null;
+            
+    $scope.config.cubes = [];
+	
+	$scope.config.theMeasure = {text: null};
+            
+    $scope.config.measures = [];
+      
+  $scope.setSubject = function(data){
+     if ($scope.config.theOldSubject !== data.text) {
+       $scope.setCube({text: null, value: null});
+	   $scope.config.cubes = Schema.getCubes(data.value);
+     }
+     $scope.config.theOldSubject = data.text;
+	 $scope.config.theSubject = {text: data.text, value: data.value};
+
+  };
+  
+  $scope.setCube = function(data){
+     if ($scope.config.theOldCube !== data.text) {
+       $scope.setMeasure({text: null, value: null});
+	   $scope.config.measures = Schema.getMeasures($scope.config.theSubject.value, data.value);
+     }
+     $scope.config.theOldCube = data.text;
+	 $scope.config.theCube = {text: data.text, value: data.value};
+  };
+  
+  $scope.setMeasure = function(data){
+	 $scope.config.theMeasure = {text: data.text, value: data.value};
+  };
+
+
+    $scope.ddSelectSelected = {}; // Must be an object
+
   });

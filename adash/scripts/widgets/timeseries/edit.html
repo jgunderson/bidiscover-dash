@@ -1,12 +1,45 @@
 <form role="form">
   <div class="form-group">
-    <label for="subject">Subject</label>
-    <input type="subject" class="form-control" id="subject" ng-model="config.subject" placeholder="Enter subject">
-    <label for="cube">Cube</label>
-    <input type="cube" class="form-control" id="cube" ng-model="config.cube" placeholder="Enter cube">
-	<label for="measure">Measure</label>
-    <input type="measure" class="form-control" id="measure" ng-model="config.measure" placeholder="Enter measure">
-	<label for="filters">Filters</label>
-    <input type="filters" class="form-control" id="filters" ng-model="config.filters" placeholder="Enter filters">
   </div>
 </form>
+  <table class="chartEdit">
+    <tr>
+      <td>
+        <label for="subject">Subject  </label>
+      </td>
+      <td>
+     	<div style="z-index: 5"
+			dropdown-select="config.subjects"
+			dropdown-item-label="text"
+			dropdown-model="config.theSubject"
+			dropdown-onchange="setSubject(selected)">
+		</div>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <label for="cube">Cube</label>
+      </td>
+      <td>
+     	<div style="z-index: 4"
+			ng-disabled="!config.theSubject.text"
+			dropdown-select="config.cubes"
+			dropdown-item-label="text"
+			dropdown-model="config.theCube"
+			dropdown-onchange="setCube(selected)">
+		</div>
+      </td>
+    </tr>   <tr>
+      <td>
+        <label for="cube">Measure</label>
+      </td>
+      <td>
+     	<div style="z-index: 3"
+			dropdown-select="config.measures"
+			dropdown-model="config.theMeasure"
+			dropdown-onchange="setMeasure(selected)">
+		</div>
+      </td>
+    </tr>
+
+  </table>

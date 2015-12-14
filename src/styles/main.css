@@ -73,3 +73,13 @@ pre.edit {
 .icon-plus-sign{
   background-position:0 -96px;
 }
+
+table.chartEdit {
+    width:100%;
+}
+table.chartEdit  th, td {
+    padding:10px;
+}
+table.chartEdit  td {
+    width:40px;
+}

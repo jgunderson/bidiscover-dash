@@ -1,23 +1,42 @@
-start server:
+Architecture
+------------
 
-   node node_server/server.js
-   
-   static server listening on 8125.  For example:
-   http://ubuntu64:8125/adash/index-dash.html
-   
-   xmla server listening on 8124.  For example:
-   
-   http://ubuntu64:8124/?url=http://ubuntu64:8080/pentaho/Xmla%3Fuserid%3Dadmin%26password=Car54WhereRU&mdx=WITH%20%20MEMBER%20[Measures].[THESUM]%20AS%20SUM(CROSSJOIN({LASTPERIODS(12,%20[Issue%20Date.Calendar].[2015].[1])},{LASTPERIODS(12,[Target%20Date.Calendar].[2015].[1])}),%20%20[Measures].[Amount,%20Opportunity%20Gross])%20%20SELECT%20NON%20EMPTY%20{[Measures].[THESUM]}%20ON%20COLUMNS,%20NON%20EMPTY%20{Hierarchize({[Opportunity].[All%20Opportunities]})}%20ON%20ROWS%20FROM%20CROpportunity
-   http://ubuntu64:8124/?url=http://ubuntu64:8080/pentaho/Xmla%3Fuserid%3Dadmin%26password=Car54WhereRU
-   http://ubuntu64:8124/Provider%3DMondrian%3BDataSource%3DPentaho/xTuple/CROpportunity?url=http://ubuntu64:8080/pentaho/Xmla%3Fuserid%3Dadmin-default.dev%26password=admin&mdx=SELECT%20NON%20EMPTY%20{Hierarchize({[Opportunity].[Opportunity].Members})}%20ON%20COLUMNS,%20NON%20EMPTY%20{[Measures].[Amount,%20Opportunity%20Gross]}%20ON%20ROWS%20FROM%20[CROpportunity]%20&format=application/json
+Install
+-------
+Install bower and grunt:
 
-   
-   
-http://ubuntu64:8124/?format=application/json&mdx=SELECT%20NON%20EMPTY%20{Hierarchize({[Opportunity].[Opportunity].Members})}%20ON%20COLUMNS,%20NON%20EMPTY%20{[Measures].[Amount,%20Opportunity%20Gross]}%20ON%20ROWS%20FROM%20[CROpportunity]
-   
-SELECT NON EMPTY {Hierarchize({[Opportunity].[Opportunity].Members})} ON COLUMNS, NON EMPTY {[Measures].[Amount, Opportunity Gross]} ON ROWS FROM [CROpportunity]
-   
-mongodb
+```bash
+npm install -g bower
+npm install -g grunt-cli
+```
+
+Clone the repository:
+
+```bash
+git clone https://github.com/jgunderson/bidiscover-dash/
+cd bidiscover-dash
+```
+
+Install npm and bower dependencies:
+
+```bash
+npm install
+bower install
+
+XMLA Server
+-----------------
+
+See https://github.com/xtuple/xtuple/wiki/xTuple-Open-Business-Intelligence 
+
+to install bi-open  https://github.com/xtuple/bi-open and Pentaho.
+
+To start server:
+
+cd bi-open/scripts
+sudo sh start_bi.sh
+
+MongoDB Server
+--------------
 	Starts at startup using:
 	/usr/bin/mongod --config /etc/mongod.conf
 	
@@ -30,6 +49,25 @@ mongodb
 	
 	to connect from javascript:
 	mongodb://127.0.0.1:27017/test
+
+Start Node Server
+-----------------
+   cd bidiscover-dash
+   node server.js
+   
+   static server is started listening on 8125.  For example:
+   http://ubuntu64:8125/#/
+   
+   xmla server is started listening on 8124.  For example:
+   
+   http://ubuntu64:8124/?url=http://ubuntu64:8080/pentaho/Xmla%3Fuserid%3Dadmin%26password=Car54WhereRU&mdx=WITH%20%20MEMBER%20[Measures].[THESUM]%20AS%20SUM(CROSSJOIN({LASTPERIODS(12,%20[Issue%20Date.Calendar].[2015].[1])},{LASTPERIODS(12,[Target%20Date.Calendar].[2015].[1])}),%20%20[Measures].[Amount,%20Opportunity%20Gross])%20%20SELECT%20NON%20EMPTY%20{[Measures].[THESUM]}%20ON%20COLUMNS,%20NON%20EMPTY%20{Hierarchize({[Opportunity].[All%20Opportunities]})}%20ON%20ROWS%20FROM%20CROpportunity
+   http://ubuntu64:8124/?url=http://ubuntu64:8080/pentaho/Xmla%3Fuserid%3Dadmin%26password=Car54WhereRU
+   http://ubuntu64:8124/Provider%3DMondrian%3BDataSource%3DPentaho/xTuple/CROpportunity?url=http://ubuntu64:8080/pentaho/Xmla%3Fuserid%3Dadmin-default.dev%26password=admin&mdx=SELECT%20NON%20EMPTY%20{Hierarchize({[Opportunity].[Opportunity].Members})}%20ON%20COLUMNS,%20NON%20EMPTY%20{[Measures].[Amount,%20Opportunity%20Gross]}%20ON%20ROWS%20FROM%20[CROpportunity]%20&format=application/json
+   http://ubuntu64:8124/?format=application/json&mdx=SELECT%20NON%20EMPTY%20{Hierarchize({[Opportunity].[Opportunity].Members})}%20ON%20COLUMNS,%20NON%20EMPTY%20{[Measures].[Amount,%20Opportunity%20Gross]}%20ON%20ROWS%20FROM%20[CROpportunity]
+   
+SELECT NON EMPTY {Hierarchize({[Opportunity].[Opportunity].Members})} ON COLUMNS, NON EMPTY {[Measures].[Amount, Opportunity Gross]} ON ROWS FROM [CROpportunity]
+
+
 	
 
 	

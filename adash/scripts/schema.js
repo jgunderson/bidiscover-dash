@@ -22,6 +22,7 @@ angular.module('erpbi-schema', [])
       });
       _.each(cubeSchema.measures, function (item) {
         measures.push(item.title);
+		measures.push( {value: item.name, text: ("%" + item.title).toLocaleString()});
       });
       return measures;
     },
@@ -160,6 +161,34 @@ angular.module('erpbi-schema', [])
         }
       });
       return cubeSchema.timeDimension;
+    }
+	
+    /*
+     *  Get schemas.
+     */
+    this.getSchemas = function () {
+      var theSchemas = [];
+      _.each(this.schemas, function (item) {
+		theSchemas.push( {value: item.name, text: ("%" + item.name).toLocaleString()});
+      });
+      return theSchemas;
+    }
+	
+    /*
+     *  Get cubes.
+     */
+    this.getCubes = function (schema) {
+      var theCubes = [],
+	    schemaObj;
+      _.each(this.schemas, function (item) {
+        if (item.name === schema) {
+          schemaObj = item;
+        }
+      });
+      _.each(schemaObj.cubes, function (item) {
+		theCubes.push( {value: item.name, text: ("%" + item.name).toLocaleString()});
+      });
+      return theCubes;
     }
 
   this.schemas = [
@@ -309,7 +338,7 @@ angular.module('erpbi-schema', [])
                      {title: "itemType", name: "Product.Products by Type by Code", nameProperty: "Type Name", codeHier: "[Product.Products by Type by Code].[Type]"},
                      {title: "shipRegion", name: "Ship City", nameProperty: "Region Name", codeHier: "[Ship City.Ship Region].[Region Code]"},
                      {title: "billRegion", name: "Bill City", nameProperty: "Region Name", codeHier: "[Bill City.Bill Region].[Region Code]"}],
-          timeDimension: {name: "Period.Fiscal Period CL", year: "[Fiscal Period.Fiscal Period CL].[Fiscal Year]", month: "[Fiscal Period.Fiscal Period CL].[Fiscal Period]"},
+          timeDimension: {name: "Fiscal Period.Fiscal Period CL", year: "[Fiscal Period.Fiscal Period CL].[Fiscal Year]", month: "[Fiscal Period.Fiscal Period CL].[Fiscal Period]"},
         },
         
         {name: "SODelivery", //Shipment
